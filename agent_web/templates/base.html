@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Data-Juicer Agent 智能数据处理工作台">
+  <title>{% block title %}Data-Juicer Agent{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="app-body">
+  <header class="topbar">
+    <a class="brand" href="/">
+      <span class="brand-mark"><i></i><i></i><i></i></span>
+      <span><strong>Data-Juicer Agent</strong><small>智能数据处理工作台</small></span>
+    </a>
+    <nav class="main-nav" aria-label="主导航">
+      <a class="{% if page == 'workspace' %}active{% endif %}" href="/">Agent 工作台</a>
+      <a class="{% if page == 'tasks' %}active{% endif %}" href="/tasks">任务中心</a>
+      {% if user.role == 'admin' %}<a class="{% if page == 'admin' %}active{% endif %}" href="/admin/runs">运行与调用</a>{% endif %}
+    </nav>
+    <div class="user-menu" id="userMenu">
+      <button class="account-trigger" id="accountMenuButton" type="button" aria-haspopup="menu" aria-expanded="false">
+        <span class="avatar">{{ user.display_name[0] | upper }}</span>
+        <span class="user-copy"><strong>{{ user.display_name }}</strong><small>@{{ user.username }}</small></span>
+        <span class="account-chevron" aria-hidden="true">⌄</span>
+      </button>
+      <div class="account-popover hidden" id="accountPopover" role="menu">
+        <div class="account-summary">
+          <span class="avatar account-avatar">{{ user.display_name[0] | upper }}</span>
+          <div><strong>{{ user.display_name }}</strong><small>@{{ user.username }}</small></div>
+        </div>
+        <div class="account-meta"><span>当前身份</span><strong>{{ '管理员' if user.role == 'admin' else '普通用户' }}</strong></div>
+        <div class="account-meta"><span>账号状态</span><strong class="account-active">正常</strong></div>
+        {% if user.role == 'admin' %}<a class="account-action" href="/admin/runs" role="menuitem">账号管理与运行记录</a>{% endif %}
+        <button class="account-action account-logout" id="logoutButton" type="button" role="menuitem">退出登录</button>
+      </div>
+    </div>
+  </header>
+  <main class="page-shell">{% block content %}{% endblock %}</main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="modalRoot"></div>
+  <script src="/static/markdown.js"></script>
+  <script src="/static/common.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}任务中心 · Data-Juicer Agent{% endblock %}
+{% block content %}
+<section class="standard-page">
+  <header class="page-heading"><div><span class="eyebrow">TASK CENTER</span><h1>任务中心</h1><p>统一调度 CPU/GPU 任务，查看排队原因、运行日志与结果。</p></div><button class="secondary-button" id="refreshTasks">↻ 刷新</button></header>
+  <div class="metric-grid" id="taskMetrics"></div>
+  <div class="table-card">
+    <div class="table-toolbar"><div class="search-field table-search"><span>⌕</span><input id="taskSearch" placeholder="搜索任务名称或 ID"></div><select id="taskStatus"><option value="">全部状态</option><option value="queued">排队中</option><option value="dispatching">正在启动</option><option value="running">运行中</option><option value="succeeded">成功</option><option value="failed">失败</option><option value="cancelled">已取消</option></select><select id="taskExecutor"><option value="">全部调度后端</option><option value="local">普通执行</option><option value="ray">Ray</option></select></div>
+    <div class="table-wrap"><table><thead><tr><th>任务</th><th>资源与用户</th><th>调度</th><th>状态/排队</th><th>提交时间</th><th>运行时长</th><th></th></tr></thead><tbody id="taskRows"></tbody></table></div>
+  </div>
+</section>
+<aside class="drawer hidden" id="taskDrawer"><div class="drawer-backdrop" data-close-drawer></div><div class="drawer-panel"><header><div><span class="eyebrow">TASK DETAIL</span><h2 id="taskDrawerTitle">任务详情</h2></div><button class="icon-button" data-close-drawer>×</button></header><div id="taskDrawerBody" class="drawer-body"></div></div></aside>
+{% endblock %}
+{% block scripts %}<script src="/static/tasks.js"></script>{% endblock %}

@@ -1,0 +1,114 @@
+image_watermark_filter:
+  name: image_watermark_filter
+  desc: Filter to keep samples whose images have no watermark with high probability.
+  enabled: true
+  args:
+    hf_watermark_model:
+      name: hf_watermark_model
+      desc: watermark detection model name on huggingface.
+      type: str
+      default: amrul-hzz/watermark_detector
+      v: amrul-hzz/watermark_detector
+      options: null
+      min: null
+      max: null
+    trust_remote_code:
+      name: trust_remote_code
+      desc: Whether to trust the remote code for loading huggingface model.
+      type: bool
+      default: false
+      v: false
+      options:
+      - true
+      - false
+      min: null
+      max: null
+    prob_threshold:
+      name: prob_threshold
+      desc: the predicted watermark probability threshold for samples. range from
+        0 to 1. Samples with watermark probability less than this threshold will be
+        kept.
+      type: float
+      default: 0.8
+      v: 0.8
+      options: null
+      min: 0.0
+      max: 1.0
+    any_or_all:
+      name: any_or_all
+      desc: 'keep this sample with ''any'' or ''all'' strategy of all images. ''any'':
+        keep this sample if any images meet the condition. ''all'': keep this sample
+        only if all images meet the condition.'
+      type: str
+      default: any
+      v: any
+      options:
+      - any
+      - all
+      min: null
+      max: null
+  stats: {}
+language_id_score_filter:
+  name: language_id_score_filter
+  desc: Filter to keep samples in a specific language with confidence score larger
+    than a specific min value.
+  enabled: true
+  args:
+    lang:
+      name: lang
+      desc: Samples in which languages to keep.
+      type: Union[str, List[str]]
+      default: ''
+      v: ''
+      options: null
+      min: null
+      max: null
+    min_score:
+      name: min_score
+      desc: The min language identification confidence scores of samples to keep.
+      type: float
+      default: 0.8
+      v: 0.8
+      options: null
+      min: -1000000.0
+      max: 1000000.0
+  stats: {}
+alphanumeric_filter:
+  name: alphanumeric_filter
+  desc: Filter to keep samples with alphabet/numeric ratio within a specific range.
+  enabled: true
+  args:
+    tokenization:
+      name: tokenization
+      desc: Whether to count the ratio of alphanumeric to the total number of tokens.
+        if tokenization=False, it will count the ratio of alphanumeric to the total
+        number of characters.
+      type: bool
+      default: false
+      v: false
+      options:
+      - true
+      - false
+      min: null
+      max: null
+    min_ratio:
+      name: min_ratio
+      desc: The min filter ratio in alphanumeric op, samples will be filtered if their
+        alphabet/numeric ratio is below this parameter.
+      type: float
+      default: 0.25
+      v: 0.25
+      options: null
+      min: -1000000.0
+      max: 1000000.0
+    max_ratio:
+      name: max_ratio
+      desc: The max filter ratio in alphanumeric op, samples will be filtered if their
+        alphabet/numeric ratio exceeds this parameter.
+      type: float
+      default: 1000000.0
+      v: 1000000.0
+      options: null
+      min: -1000000.0
+      max: 1000000.0
+  stats: {}

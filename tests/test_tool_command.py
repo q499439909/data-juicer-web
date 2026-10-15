@@ -1,0 +1,368 @@
+# -*- coding: utf-8 -*-
+
+import json
+from pathlib import Path
+
+from data_juicer_agents.cli import build_parser, main
+from data_juicer_agents.tools.plan import PlanModel
+
+
+def test_tool_parser_accepts_nested_commands():
+    parser = build_parser()
+    args = parser.parse_args(["tool", "run", "inspect_dataset", "--input-json", "{}"])
+    assert args.command == "tool"
+    assert args.tool_action == "run"
+    assert args.tool_name == "inspect_dataset"
+
+
+def test_tool_parser_accepts_global_output_flags_after_subcommand():
+    parser = build_parser()
+    args = parser.parse_args(["tool", "list", "--debug"])
+    assert args.command == "tool"
+    assert args.tool_action == "list"
+    assert args.output_level == "debug"
+
+
+def test_tool_list_accepts_global_output_flags_in_main_path(capsys):
+    code = main(["tool", "list", "--debug"])
+    assert code == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["action"] == "tool_list"
+
+
+def test_tool_list_returns_json_payload(capsys):
+    code = main(["tool", "list", "--tag", "plan"])
+    assert code == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["action"] == "tool_list"
+    assert payload["count"] > 0
+    assert any(item["name"] == "plan_validate" for item in payload["tools"])
+    assert all("plan" in item["tags"] for item in payload["tools"])
+
+
+def test_tool_list_harness_profile_excludes_non_harness_groups(monkeypatch, capsys):
+    monkeypatch.setenv("DJX_TOOL_PROFILE", "harness")
+
+    code = main(["tool", "list"])
+    assert code == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    names = {item["name"] for item in payload["tools"]}
+    assert payload["profile"] == "harness"
+    assert "inspect_dataset" in names
+    assert "retrieve_operators" in names
+    assert "get_operator_info" in names
+    assert "list_operator_catalog" in names
+    assert "retrieve_operators_api" not in names
+    assert "develop_operator" not in names
+    assert "write_text_file" not in names
+    assert "execute_bash" not in names
+    assert "execute_python_code" not in names
+
+
+def test_tool_schema_returns_input_schema(capsys):
+    code = main(["tool", "schema", "inspect_dataset"])
+    assert code == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["tool"]["name"] == "inspect_dataset"
+    assert "dataset_source" in payload["input_schema"]["properties"]
+
+
+def test_tool_schema_unknown_tool_returns_exit_2(capsys):
+    code = main(["tool", "schema", "missing_tool"])
+    assert code == 2
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error_type"] == "tool_not_found"
+
+
+def test_tool_schema_harness_profile_rejects_excluded_tool(monkeypatch, capsys):
+    monkeypatch.setenv("DJX_TOOL_PROFILE", "harness")
+
+    code = main(["tool", "schema", "retrieve_operators_api"])
+    assert code == 2
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error_type"] == "tool_not_available_in_profile"
+    assert payload["profile"] == "harness"
+
+
+def test_tool_schema_harness_profile_allows_local_retrieve_tool(monkeypatch, capsys):
+    monkeypatch.setenv("DJX_TOOL_PROFILE", "harness")
+
+    code = main(["tool", "schema", "retrieve_operators"])
+    assert code == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["profile"] == "harness"
+    assert payload["tool"]["name"] == "retrieve_operators"
+    assert payload["input_schema"]["properties"]["mode"]["enum"] == ["auto", "bm25", "regex", "grep"]
+
+
+def test_tool_schema_harness_profile_allows_list_operator_catalog(monkeypatch, capsys):
+    monkeypatch.setenv("DJX_TOOL_PROFILE", "harness")
+
+    code = main(["tool", "schema", "list_operator_catalog"])
+    assert code == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["profile"] == "harness"
+    assert payload["tool"]["name"] == "list_operator_catalog"
+    props = payload["input_schema"]["properties"]
+    assert "include_parameters" in props
+    assert "limit" in props
+
+
+def test_tool_schema_harness_profile_rejects_dev_tool(monkeypatch, capsys):
+    monkeypatch.setenv("DJX_TOOL_PROFILE", "harness")
+
+    code = main(["tool", "schema", "develop_operator"])
+    assert code == 2
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error_type"] == "tool_not_available_in_profile"
+    assert payload["profile"] == "harness"
+
+
+def test_tool_run_read_tool_success(tmp_path: Path, capsys):
+    dataset = tmp_path / "data.jsonl"
+    dataset.write_text('{"text": "hello world"}\n', encoding="utf-8")
+
+    code = main(
+        [
+            "tool",
+            "run",
+            "inspect_dataset",
+            "--input-json",
+            json.dumps({"dataset_source": {"path": str(dataset)}, "sample_size": 1}),
+        ]
+    )
+    assert code == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["action"] == "inspect_dataset"
+    assert payload["inspected_path"] == str(dataset)
+
+
+def test_tool_run_harness_profile_blocks_excluded_tool(monkeypatch, tmp_path: Path, capsys):
+    monkeypatch.setenv("DJX_TOOL_PROFILE", "harness")
+    target = tmp_path / "notes.txt"
+
+    code = main(
+        [
+            "tool",
+            "run",
+            "write_text_file",
+            "--yes",
+            "--input-json",
+            json.dumps({"file_path": str(target), "content": "hello"}),
+        ]
+    )
+    assert code == 2
+    assert not target.exists()
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error_type"] == "tool_not_available_in_profile"
+    assert payload["profile"] == "harness"
+
+
+def test_tool_run_harness_profile_blocks_process_tool(monkeypatch, capsys):
+    monkeypatch.setenv("DJX_TOOL_PROFILE", "harness")
+
+    code = main(
+        [
+            "tool",
+            "run",
+            "execute_bash",
+            "--yes",
+            "--input-json",
+            json.dumps({"command": "printf hello", "timeout": 5}),
+        ]
+    )
+    assert code == 2
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error_type"] == "tool_not_available_in_profile"
+    assert payload["profile"] == "harness"
+
+
+def test_tool_run_write_tool_requires_explicit_confirmation(tmp_path: Path, capsys):
+    target = tmp_path / "notes.txt"
+
+    code = main(
+        [
+            "tool",
+            "run",
+            "write_text_file",
+            "--input-json",
+            json.dumps({"file_path": str(target), "content": "hello"}),
+        ]
+    )
+    assert code == 3
+    assert not target.exists()
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error_type"] == "confirmation_required"
+    assert payload["tool_name"] == "write_text_file"
+
+
+def test_tool_run_write_tool_succeeds_with_yes(tmp_path: Path, capsys):
+    target = tmp_path / "notes.txt"
+
+    code = main(
+        [
+            "tool",
+            "run",
+            "write_text_file",
+            "--yes",
+            "--input-json",
+            json.dumps({"file_path": str(target), "content": "hello"}),
+        ]
+    )
+    assert code == 0
+    assert target.read_text(encoding="utf-8") == "hello"
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["file_path"] == str(target)
+
+
+def test_tool_run_execute_tool_succeeds_with_yes(capsys):
+    code = main(
+        [
+            "tool",
+            "run",
+            "execute_bash",
+            "--yes",
+            "--input-json",
+            json.dumps({"command": "printf hello", "timeout": 5}),
+        ]
+    )
+    assert code == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["stdout"] == "hello"
+
+
+def test_tool_run_plan_validate_success(tmp_path: Path, capsys):
+    dataset = tmp_path / "data.jsonl"
+    dataset.write_text('{"text": "hello world"}\n', encoding="utf-8")
+    export = tmp_path / "out" / "result.jsonl"
+    export.parent.mkdir(parents=True, exist_ok=True)
+    plan = PlanModel(
+        plan_id="plan_tool_cli_001",
+        user_intent="filter short rows",
+        modality="text",
+        recipe={
+            "dataset_path": str(dataset),
+            "export_path": str(export),
+            "text_keys": ["text"],
+            "np": 1,
+            "executor_type": "default",
+            "process": [{"words_num_filter": {"min_words": 10}}],
+        },
+    )
+
+    code = main(
+        [
+            "tool",
+            "run",
+            "plan_validate",
+            "--input-json",
+            json.dumps({"plan_payload": plan.to_dict()}),
+        ]
+    )
+    assert code == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["plan_id"] == "plan_tool_cli_001"
+    assert payload["operator_names"] == ["words_num_filter"]
+
+
+def test_tool_run_invalid_json_returns_exit_2(capsys):
+    code = main(["tool", "run", "list_system_config", "--input-json", "{not-json}"])
+    assert code == 2
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error_type"] == "invalid_input"
+
+
+def test_tool_run_validation_error_returns_exit_2(capsys):
+    # inspect_dataset requires at least dataset_path or dataset; pass an
+    # invalid type for sample_size to trigger pydantic validation.
+    code = main(["tool", "run", "inspect_dataset", "--input-json", json.dumps({"sample_size": -1})])
+    assert code == 2
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error_type"] == "input_validation_failed"
+    assert payload["validation_errors"]
+
+
+def test_tool_run_tool_failure_returns_exit_4(tmp_path: Path, capsys):
+    missing = tmp_path / "missing.txt"
+    code = main(
+        [
+            "tool",
+            "run",
+            "view_text_file",
+            "--input-json",
+            json.dumps({"file_path": str(missing)}),
+        ]
+    )
+    assert code == 4
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error_type"] == "file_not_found"
+
+
+def test_tool_run_retrieve_operators_api_missing_key_returns_failure(monkeypatch, capsys):
+    monkeypatch.delenv("DASHSCOPE_API_KEY", raising=False)
+    monkeypatch.delenv("MODELSCOPE_API_TOKEN", raising=False)
+
+    code = main(
+        [
+            "tool",
+            "run",
+            "retrieve_operators_api",
+            "--input-json",
+            json.dumps({"intent": "filter long text", "mode": "auto"}),
+        ]
+    )
+    assert code == 4
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error_type"] == "missing_api_key"
+    assert payload["retrieval_trace"]
+    assert all(item["reason"] == "missing_api_key" for item in payload["retrieval_trace"])
+
+
+def test_tool_list_invalid_profile_returns_exit_2(monkeypatch, capsys):
+    monkeypatch.setenv("DJX_TOOL_PROFILE", "unknown-profile")
+
+    code = main(["tool", "list"])
+    assert code == 2
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is False
+    assert payload["error_type"] == "invalid_tool_profile"

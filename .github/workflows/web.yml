@@ -1,0 +1,33 @@
+name: Web deployment checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    env:
+      AGENT_WEB_RAY_AUTO_START: "false"
+      AGENT_WEB_ENV_FILE: /tmp/dja-ci-absent.env
+      AGENT_WEB_DATA_DIR: /tmp/dja-ci-data
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install exactly as a deployment
+        run: bash agent_web/install.sh
+      - name: Install Web test tools
+        run: uv sync --locked --extra web --group web-test --no-dev --python 3.12
+      - name: Web tests
+        run: .venv/bin/python -m pytest agent_web/tests -q
+      - name: Markdown rendering tests
+        run: node --test agent_web/tests/markdown.test.js
+      - name: Real server and local Data-Juicer task
+        run: .venv/bin/python -m agent_web.scripts.smoke_test

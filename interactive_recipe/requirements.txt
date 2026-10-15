@@ -1,0 +1,5 @@
+loguru
+streamlit
+dashscope
+oyaml
+openai

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Agent 工作台 · Data-Juicer Agent{% endblock %}
+{% block content %}
+<div class="workspace-grid">
+  <aside class="conversation-panel panel">
+    <button class="primary-button wide" id="newConversation"><span>＋</span> 新建会话</button>
+    <div class="search-field"><span>⌕</span><input id="conversationSearch" placeholder="搜索会话"></div>
+    <div class="segmented compact"><button class="active" data-conversation-filter="active">进行中</button><button data-conversation-filter="all">全部</button><button data-conversation-filter="hidden">已隐藏</button></div>
+    <div class="conversation-list" id="conversationList"></div>
+  </aside>
+
+  <section class="chat-panel panel">
+    <header class="chat-header">
+      <div><span class="eyebrow">CURRENT SESSION</span><h2 id="conversationTitle">开始一个新会话</h2></div>
+      <div class="chat-actions"><span class="connection-dot"></span><span>Agent 在线</span><button class="icon-button" id="renameConversation" title="重命名">✎</button><button class="icon-button" id="hideConversation" title="隐藏">⌁</button></div>
+    </header>
+    <div class="message-list" id="messageList">
+      <div class="empty-chat" id="emptyChat">
+        <div class="agent-orb"><span></span></div>
+        <span class="eyebrow">DATA-JUICER AGENT</span>
+        <h1>今天想处理什么数据？</h1>
+        <p>选择右侧数据，或者直接描述目标。我会分析数据并生成可确认的处理方案。</p>
+        <div class="prompt-examples"><button>分析这个数据集的质量问题</button><button>过滤过短文本并去重</button><button>生成一个图文数据清洗方案</button></div>
+      </div>
+    </div>
+    <div id="planConfirm" class="plan-confirm hidden"></div>
+    <footer class="composer">
+      <div id="selectedData" class="selected-data hidden"></div>
+      <textarea id="messageInput" rows="2" placeholder="描述数据处理目标，按 Enter 发送，Shift + Enter 换行"></textarea>
+      <div class="composer-footer"><span>Agent 会在执行任务前等待你的确认</span><button id="sendMessage" class="send-button" aria-label="发送">↑</button></div>
+    </footer>
+  </section>
+
+  <aside class="asset-panel panel">
+    <div class="asset-tabs"><button class="active" data-asset-tab="data">数据</button><button data-asset-tab="plan">方案</button><button data-asset-tab="results">结果</button></div>
+    <section id="asset-data" class="asset-content">
+      <div class="upload-zone" id="uploadZone"><span class="upload-icon">↥</span><strong>上传数据</strong><p>拖入文件，或选择文件、文件夹、压缩包</p><div><button class="secondary-button" id="chooseFiles">选择文件</button><button class="text-button" id="chooseFolder">选择文件夹</button></div></div>
+      <input id="fileInput" type="file" multiple hidden><input id="folderInput" type="file" webkitdirectory multiple hidden>
+      <div class="section-heading"><div><span>我的工作区</span><small id="workspacePath">/</small></div><button class="icon-button" id="refreshFiles">↻</button></div>
+      <div class="file-list" id="fileList"></div>
+    </section>
+    <section id="asset-plan" class="asset-content hidden"><div id="planView" class="empty-side"><span>◇</span><strong>暂无处理方案</strong><p>与 Agent 沟通后，已校验的方案会显示在这里。</p></div></section>
+    <section id="asset-results" class="asset-content hidden"><div id="resultList" class="empty-side"><span>✓</span><strong>暂无结果</strong><p>任务执行完成后，结果会显示在这里。</p></div></section>
+  </aside>
+</div>
+<div id="workspaceContextMenu" class="context-menu hidden"></div>
+{% endblock %}
+{% block scripts %}<script src="/static/workspace.js"></script>{% endblock %}

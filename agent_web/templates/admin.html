@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}运行与调用 · Data-Juicer Agent{% endblock %}
+{% block content %}
+<section class="standard-page">
+  <header class="page-heading"><div><span class="eyebrow">OPERATIONS</span><h1>运行与调用</h1><p>查看所有用户的 Agent、模型、工具及任务运行情况。</p></div><div class="heading-actions"><button class="secondary-button" id="manageUsers">账号管理</button><button class="secondary-button" id="refreshRuns">↻ 刷新</button></div></header>
+  <div class="metric-grid" id="adminMetrics"></div>
+  <div class="table-card">
+    <div class="table-toolbar"><div class="search-field table-search"><span>⌕</span><input id="runSearch" placeholder="搜索用户、会话、问题或运行 ID"></div><select id="runStatus"><option value="">全部状态</option><option value="success">成功</option><option value="failed">失败</option><option value="running">运行中</option></select></div>
+    <div class="table-wrap"><table><thead><tr><th>运行</th><th>用户</th><th>问题摘要</th><th>状态</th><th>估算 Token</th><th>总耗时</th><th>开始时间</th><th></th></tr></thead><tbody id="runRows"></tbody></table></div>
+  </div>
+</section>
+<aside class="drawer hidden" id="runDrawer"><div class="drawer-backdrop" data-close-run></div><div class="drawer-panel wide-drawer"><header><div><span class="eyebrow">RUN TRACE</span><h2 id="runDrawerTitle">运行详情</h2></div><button class="icon-button" data-close-run>×</button></header><div id="runDrawerBody" class="drawer-body"></div></div></aside>
+<aside class="drawer hidden" id="userDrawer"><div class="drawer-backdrop" data-close-users></div><div class="drawer-panel"><header><div><span class="eyebrow">ACCOUNTS</span><h2>账号管理</h2></div><button class="icon-button" data-close-users>×</button></header><div class="drawer-body"><div class="search-field"><span>⌕</span><input id="userSearch" placeholder="搜索用户"></div><div id="userList" class="user-list"></div></div></div></aside>
+{% endblock %}
+{% block scripts %}<script src="/static/admin.js"></script>{% endblock %}

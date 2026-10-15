@@ -1,0 +1,153 @@
+<div align="center">
+<img src="docs/imgs/dj_agents_logo.png" width=70%>
+<br/>
+
+# Data-Juicer Web
+
+A Web workspace for conversational data processing, file uploads, task scheduling, and result downloads. Based on [Data-Juicer Agents](https://github.com/datajuicer/data-juicer-agents), [Data-Juicer](https://github.com/datajuicer/data-juicer), and [AgentScope](https://github.com/agentscope-ai/agentscope).
+
+[简体中文](./README_ZH.md) | [English](./README.md)
+
+🏗️ [Overview Doc](./docs/overview.md) • ⚡️ [Quick Start Doc](./docs/quick_start.md) • >_ [CLI Doc](./docs/cli.md) • 🔧 [Tools Doc](./docs/tools.md) • 🎯 [Roadmap](#roadmap)
+</div>
+
+## Deploy the Web UI
+
+This repository includes the Web UI and its matching Agents backend. The Data-Juicer
+engine is installed from PyPI; no sibling source checkout is required.
+Use Linux / WSL2 with Python 3.12 and install [uv](https://docs.astral.sh/uv/getting-started/installation/).
+
+```bash
+git clone https://github.com/q499439909/data-juicer-web.git
+cd data-juicer-web
+bash agent_web/install.sh
+# Set your DASHSCOPE_API_KEY in agent_web/.env
+bash agent_web/scripts/create_admin.sh admin
+bash agent_web/start.sh --background
+bash agent_web/status.sh
+```
+
+Open `http://localhost:8090`, or replace localhost with your server address.
+See the [deployment guide](agent_web/DEPLOY.md) / [中文部署文档](agent_web/DEPLOY_ZH.md).
+
+## News
+
+- 🚀 [2026-03-11] **Major refactor and upgrade of `data_juicer_agents` completed.**
+  - The project architecture and CLI/session capabilities were comprehensively redesigned for better maintainability and extensibility.
+  - 🏗️ [Overview](./docs/overview.md) | ⚡️ [Quick Start](./docs/quick_start.md) | >_ [CLI Doc](./docs/cli.md) | 🔧 [Tools](./docs/tools.md) | 🎯 [Roadmap](#roadmap)
+  - Try processing data by chatting with the agent!
+
+  <div align="center">
+    <video src="https://github.com/user-attachments/assets/1ef8359f-78b9-45f4-9fa6-49836f7b9539" width="100%" controls loop></video>
+  </div>
+
+- 🚀[2026-01-15] [Q&A Copilot](./qa-copilot/README.md) has been deployed on the official [Doc Site](https://datajuicer.github.io/data-juicer/en/main/index.html) | [DingTalk](https://qr.dingtalk.com/action/joingroup?code=v1,k1,N78tgW54U447gJP5aMC95B6qgQhlkVQS4+dp7qQq6MpuRVJIwrSsXmL8oFqU5ajJ&_dt_no_comment=1&origin=11?) | [Discord](https://discord.gg/ngQbB9hEVK) of [Data-Juicer](https://github.com/datajuicer/data-juicer). Feel free to ask ***Juicer*** anything related to the Data-Juicer ecosystem!
+  - 📃 [Deploy-ready codes](./qa-copilot/) | 🎬 [More demos](./qa-copilot/DEMO.md) | 🎯 [Roadmap](#roadmap).
+
+
+<div align="center">
+<img src="https://github.com/user-attachments/assets/d10a95a8-fb7a-494f-b858-f21e5996790b" width=90%>
+</div>
+
+## Roadmap
+
+The long-term vision of **DJ-Agents** is to enable a **development-free data processing lifecycle**, allowing developers to focus on **what to do** rather than **how to do it**.
+
+To achieve this vision, we are tackling two fundamental challenges:
+
+- **Agents**: How to design and build powerful agents specialized in data processing
+- **Services & Tools**: How to package these agents into ready-to-use, out-of-the-box products
+
+We continuously iterate on both directions, and the roadmap may evolve accordingly as our understanding and capabilities improve.
+
+---
+
+### Agents
+
+- [ ] ~~**Data-Juicer Data Processing Agent (DJ Process Agent)** & **Data-Juicer Code Development Agent (DJ Dev Agent)**~~
+- [ ] We have stopped building scenario-specific data processing agents, and instead are building data processing `tools` for general-purpose agents. From there:
+  - [x] Hard-orchestrate these tools into `capabilities`, exposed as the `djx` CLI
+  - [ ] Soft-orchestrate them through prompts, packaged as `skills`
+  - [x] Rely on agent self-orchestration to support conversational data processing
+
+### Services & Tools
+
+- [x] **Q&A Copilot**: a Q&A assistant for the Data-Juicer ecosystem
+  - *[2026-01-15]*: already deployed on the official [Doc Site](https://datajuicer.github.io/data-juicer/en/main/index.html) of [Data-Juicer](https://github.com/datajuicer/data-juicer) | [DingTalk](https://qr.dingtalk.com/action/joingroup?code=v1,k1,N78tgW54U447gJP5aMC95B6qgQhlkVQS4+dp7qQq6MpuRVJIwrSsXmL8oFqU5ajJ&_dt_no_comment=1&origin=11?) | [Discord](https://discord.gg/ngQbB9hEVK)
+- [ ] **InteRecipe**: interactive data recipe construction through natural language
+  - *[2026-03-11]*: the current `./interactive_recipe` only shows workflow-based examples. The `dj-agents` CLI entry is already built and supports interactive data-recipe construction through natural language in the TUI. We are developing a frontend tool (`studio`) on top of this foundation as the next upgrade.
+
+---
+
+### Priority Items
+
+- **DJ Skills**: use prompt-based soft orchestration to package `tools` into `skills` for general-purpose agents.
+- **InteRecipe Studio**: support interactive data recipe construction through natural language, with multi-dimensional data and result views.
+- **Plan Tool**: extend support for fuller Data-Juicer capability coverage, DJ Hub recipe matching, and more.
+- **Dev Tool**: stabilization testing and optimization
+
+### Long-term Directions
+
+- **Continue building tools and skills for broader data-processing scenarios**, enabling wider and more flexible applications.
+  - **RAG**
+  - **Embodied Intelligence**
+  - **Data Lakehouse architectures**
+
+## Context Management
+
+Session agents keep full tool results in the ReAct memory, which grows the
+prompt cost every turn and can overflow small-context models. DJ Agents now
+bounds the model context with three layers, all enabled by default:
+
+1. **Tool-result compaction**: deterministic, rule-based shrinking of large
+   tool payloads before they enter memory (full payloads are still emitted
+   through runtime events, so UIs and logs are unaffected).
+2. **Memory compression**: when the visible history exceeds the trigger
+   budget, older messages are summarized and only the recent messages stay
+   intact.
+3. **Formatter hard budget**: a final per-request truncation guarantees a
+   single prompt never exceeds the configured window.
+
+Configure via environment variables:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `DJA_CONTEXT_WINDOW_TOKENS` | `40000` | Model context window size in tokens |
+| `DJA_CONTEXT_TRIGGER_RATIO` | `0.65` | Window fraction that triggers compression |
+| `DJA_CONTEXT_FORMATTER_RATIO` | `0.85` | Window fraction for the formatter budget |
+| `DJA_CONTEXT_KEEP_RECENT` | `10` | Recent messages kept intact on compression |
+| `DJA_CONTEXT_COMPRESSION_ENABLED` | `true` | Toggle memory compression |
+| `DJA_TOOL_RESULT_COMPACTION_ENABLED` | `true` | Toggle tool-result compaction |
+| `DJA_CONTEXT_CHAR_PER_TOKEN` | `3` | Conservative chars-per-token estimate |
+
+For small-context deployments (30k–50k windows), lower the window and ratios,
+e.g. `DJA_CONTEXT_WINDOW_TOKENS=30000 DJA_CONTEXT_TRIGGER_RATIO=0.55
+DJA_CONTEXT_FORMATTER_RATIO=0.80 DJA_CONTEXT_KEEP_RECENT=8`.
+
+To measure how much a specific tool payload saves, use:
+
+```bash
+djx debug token-usage <tool_name> --input-file payload.json --provider char
+djx debug token-usage <tool_name> --input-file payload.json --provider qwen
+```
+
+`--provider char` runs fully offline with the local AgentScope char counter;
+`--provider qwen` reports real `usage.prompt_tokens` from an OpenAI-compatible
+endpoint.
+
+## Common Issues
+
+**Q: How to get DashScope API key?**
+A: Visit [DashScope official website](https://dashscope.aliyun.com/) to register an account and apply for an API key.
+
+## Related Resources
+
+- Data-Juicer has been used by a large number of Tongyi and Alibaba Cloud internal and external users, and has facilitated many research works. All code is continuously maintained and enhanced.
+
+*Welcome to visit GitHub, Star, Fork, submit Issues, and join the community!*
+
+- **Project Repositories**:
+  - [Data-Juicer](https://github.com/datajuicer/data-juicer)
+  - [AgentScope](https://github.com/agentscope-ai/agentscope)
+
+**Contributing**: Welcome to submit Issues and Pull Requests to improve Data-Juicer Agents, Data-Juicer, and AgentScope. If you encounter problems during use or have feature suggestions, please feel free to contact us.

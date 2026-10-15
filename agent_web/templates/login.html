@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>登录 · Data-Juicer Agent</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="auth-body">
+  <div class="auth-decoration decoration-one"></div><div class="auth-decoration decoration-two"></div>
+  <section class="auth-panel">
+    <div class="auth-intro">
+      <div class="brand brand-large"><span class="brand-mark"><i></i><i></i><i></i></span><span><strong>Data-Juicer Agent</strong><small>智能数据处理工作台</small></span></div>
+      <h1>让数据处理从一句话开始</h1>
+      <p>与 Agent 一起分析数据、设计处理方案，并在本机或 Ray 上安全执行。</p>
+      <div class="auth-feature"><b>01</b><span><strong>自然语言编排</strong><small>从数据理解到可执行方案</small></span></div>
+      <div class="auth-feature"><b>02</b><span><strong>隔离任务空间</strong><small>每个用户拥有独立数据与结果</small></span></div>
+      <div class="auth-feature"><b>03</b><span><strong>本机与 Ray</strong><small>根据任务特点推荐执行方式</small></span></div>
+    </div>
+    <div class="auth-card">
+      <div class="auth-tabs"><button class="active" data-auth-tab="login">登录</button><button data-auth-tab="register">注册</button></div>
+      <form id="loginForm" class="auth-form">
+        <label>用户名<input name="username" autocomplete="username" placeholder="请输入用户名" required></label>
+        <label>密码<input name="password" type="password" autocomplete="current-password" placeholder="请输入密码" required></label>
+        <button class="primary-button wide" type="submit">进入工作台 <span>→</span></button>
+      </form>
+      <form id="registerForm" class="auth-form hidden">
+        <label>用户名<input name="username" autocomplete="username" placeholder="3～32 位字母、数字或符号" required></label>
+        <label>显示名称<input name="display_name" placeholder="大家如何称呼你" required></label>
+        <label>密码<input name="password" type="password" autocomplete="new-password" placeholder="至少 8 位" required></label>
+        <label>确认密码<input name="confirm_password" type="password" autocomplete="new-password" placeholder="请再次输入" required></label>
+        <button class="primary-button wide" type="submit">创建账号 <span>→</span></button>
+      </form>
+      <p id="authError" class="form-error"></p>
+      <small class="auth-note">当前为内网测试环境 · 注册后立即可用</small>
+    </div>
+  </section>
+  <script src="/static/common.js"></script><script src="/static/login.js"></script>
+</body>
+</html>
